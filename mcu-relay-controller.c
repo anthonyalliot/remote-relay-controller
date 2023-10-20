@@ -4,6 +4,7 @@
 
 
 #include "mcu-relay-controller-iface.h"
+#include "hardware-details/attiny.h"
 
 
 // hardware design:
@@ -15,30 +16,11 @@
 //     - relay coil 2 - configure as output
 
 
-// include hardware-specific implementation file(s)
-#ifdef IMPL_DUMMY
-#  include "hardware-details/dummy.h"
-#endif
-#ifdef IMPL_ATTINY
-#  include "hardware-details/attiny.h"
-#endif
-#ifdef IMPL_PIC12F675
-#  include "hardware-details/pic12f675.h"
-#endif
-#ifdef IMPL_PIC10F320
-#  include "hardware-details/pic10f320.h"
-#endif
-
-
-// the relay has two states, which we'll call ON or OFF
-volatile uint8_t relay_state = OFF;
-
 void relay_activate(void) // aka "set"
 {
     MRC_relay_coil_pin1_set_high();
     MRC_sleep_millisecs(RELAY_SETTLE_TIME_MS);
     MRC_relay_coil_pin1_set_low();
-    relay_state = ON;
 }
 
 void relay_deactivate(void) // aka "reset"
@@ -46,13 +28,6 @@ void relay_deactivate(void) // aka "reset"
     MRC_relay_coil_pin2_set_high();
     MRC_sleep_millisecs(RELAY_SETTLE_TIME_MS);
     MRC_relay_coil_pin2_set_low();
-    relay_state = OFF;
-}
-
-void relay_toggle(void)
-{
-    if (relay_state == OFF) { relay_activate();  }
-    else                    { relay_deactivate(); }
 }
 
 uint8_t debounce_switch(void)
@@ -94,7 +69,6 @@ int main(int argc, char* argv[])
     led_greeting();
 
     // make relay and status indicator LED consistent consistent with the
-    // default relay_state = OFF
     MRC_relay_coil_pin2_set_low();
     MRC_relay_coil_pin1_set_low();
     relay_deactivate();
@@ -109,10 +83,15 @@ int main(int argc, char* argv[])
         MRC_switch_pin_clear_int_flags();
         if (switch_pressed)
         {
-            relay_toggle();
-            MRC_led_toggle();
-            MRC_sleep_millisecs(SWITCH_DEBOUNCE_TIME_MS);
+            relay_activate();
+            MRC_led_pin_set_high();
         }
+        else
+        {
+            relay_deactivate();
+            MRC_led_pin_set_low();
+        }
+        MRC_sleep_millisecs(SWITCH_DEBOUNCE_TIME_MS);
 
         MRC_enable_interrupts();
         MRC_enter_sleep_mode();

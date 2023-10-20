@@ -84,13 +84,10 @@ void MRC_enable_interrupts(void);
 void MRC_enter_sleep_mode(void);
 #undef MRC_sleep_millisecs
 
-// status indicator LED functionality, toggle state of the pin connected to
-// the status LED; convention used here:
 //   OFF state => LED pin held low
 //   ON  state => LED pin held high
 void MRC_led_pin_set_high(void); // i.e. turn LED on
 void MRC_led_pin_set_low(void);  // i.e. turn LED off
-void MRC_led_toggle(void); // flip state (typically can be done with a single NOR expression)
 
 // relay control: two pins are used for relay coil control of a *latching*
 // relay (this could be a single-coil latching relay, or a dual-coil latching
